@@ -1,31 +1,53 @@
 let teamsData = [];
 
+// Shared AudioContext for better performance and GitHub.io compatibility
+let audioContext = null;
+let audioContextInitialized = false;
+
 // Audio objects for sounds
 let welcomeAudio = null;
-let buttonClickAudio = null;
+
+// Initialize AudioContext on first user interaction (required for GitHub.io)
+function initAudioContext() {
+    if (!audioContext && typeof window !== 'undefined') {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextInitialized = true;
+    }
+    // Resume audio context if suspended (required for autoplay policies)
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().catch(err => console.log('Audio context resume failed:', err));
+    }
+}
 
 // Initialize audio files
 function initAudio() {
     welcomeAudio = new Audio('Welcome.mp3');
     welcomeAudio.volume = 0.7;
-    
-    // Button click sound using Web Audio API for a nice click sound
-    buttonClickAudio = new (window.AudioContext || window.webkitAudioContext)();
+    welcomeAudio.preload = 'auto';
 }
 
 // Play welcome sound when site opens
 function playWelcomeSound() {
     if (welcomeAudio) {
+        // Initialize audio context on user interaction
+        initAudioContext();
         welcomeAudio.play().catch(error => {
             console.log('Could not play welcome sound:', error);
         });
     }
 }
 
-// Play button click sound
+// Play button click sound - lightweight
 function playButtonClickSound() {
+    if (!audioContextInitialized) {
+        initAudioContext();
+    }
+    
+    if (!audioContext || audioContext.state === 'suspended') {
+        return; // Skip if audio context not ready
+    }
+    
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 
@@ -35,9 +57,9 @@ function playButtonClickSound() {
         oscillator.type = 'sine';
         oscillator.frequency.value = 600;
         gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.15);
+        oscillator.stop(audioContext.currentTime + 0.1);
     } catch (error) {
         console.log('Could not play button sound:', error);
     }
@@ -72,8 +94,15 @@ function playToneSequence(audioContext, frequencies, durations) {
 
 // Play success sound - ascending tone sequence (from Commander Military project)
 function playSuccessSound() {
+    if (!audioContextInitialized) {
+        initAudioContext();
+    }
+    
+    if (!audioContext || audioContext.state === 'suspended') {
+        return;
+    }
+    
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         // Ascending sequence: [440, 554, 659, 880] with durations [0.15, 0.15, 0.15, 0.3]
         playToneSequence(audioContext, [440, 554, 659, 880], [0.15, 0.15, 0.15, 0.3]);
     } catch (error) {
@@ -83,12 +112,56 @@ function playSuccessSound() {
 
 // Play error sound - descending tone sequence (from Commander Military project)
 function playErrorSound() {
+    if (!audioContextInitialized) {
+        initAudioContext();
+    }
+    
+    if (!audioContext || audioContext.state === 'suspended') {
+        return;
+    }
+    
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         // Descending sequence: [880, 659, 440, 330] with durations [0.1, 0.1, 0.1, 0.2]
         playToneSequence(audioContext, [880, 659, 440, 330], [0.1, 0.1, 0.1, 0.2]);
     } catch (error) {
         console.log('Could not play error sound:', error);
+    }
+}
+
+// Lightweight typewriter sound - throttled to avoid lag
+let typewriterSoundCounter = 0;
+function playTypewriterSound() {
+    if (!audioContextInitialized) {
+        initAudioContext();
+    }
+    
+    if (!audioContext || audioContext.state === 'suspended') {
+        return;
+    }
+    
+    // Throttle: only play every 3rd character to reduce lag
+    typewriterSoundCounter++;
+    if (typewriterSoundCounter % 3 !== 0) {
+        return;
+    }
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Lightweight click sound
+        oscillator.type = 'square';
+        oscillator.frequency.value = 800 + Math.random() * 100;
+        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.03);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.03);
+    } catch (error) {
+        // Silently fail to avoid console spam
     }
 }
 
@@ -352,13 +425,20 @@ window.displayResult = function(team) {
     problemText.textContent = '';
     resultCard.classList.remove('hidden');
 
-    // Typewriter effect for problem statement
+    // Typewriter effect for problem statement with lightweight sound
     let charIndex = 0;
     const text = team.problem_statement;
 
     function typeWriter() {
         if (charIndex < text.length) {
-            problemText.textContent += text.charAt(charIndex);
+            const currentChar = text.charAt(charIndex);
+            problemText.textContent += currentChar;
+            
+            // Play typewriter sound only for alphanumeric characters (lightweight)
+            if (currentChar.match(/[a-zA-Z0-9]/)) {
+                playTypewriterSound();
+            }
+            
             charIndex++;
             setTimeout(typeWriter, 30);
         }
@@ -385,8 +465,26 @@ window.resetSearch = function() {
     }, 400);
 }
 
+// Initialize audio context on any user interaction (required for GitHub.io)
+function setupAudioInteraction() {
+    const initOnInteraction = () => {
+        initAudioContext();
+        // Remove listeners after first interaction to avoid memory leaks
+        document.removeEventListener('click', initOnInteraction);
+        document.removeEventListener('keydown', initOnInteraction);
+        document.removeEventListener('touchstart', initOnInteraction);
+    };
+    
+    document.addEventListener('click', initOnInteraction, { once: true });
+    document.addEventListener('keydown', initOnInteraction, { once: true });
+    document.addEventListener('touchstart', initOnInteraction, { once: true });
+}
+
 // Handle Enter key on input and add button click sounds
 document.addEventListener('DOMContentLoaded', () => {
+    // Setup audio context initialization on user interaction
+    setupAudioInteraction();
+    
     const teamIdInput = document.getElementById('teamIdInput');
     if (teamIdInput) {
         teamIdInput.addEventListener('keypress', (e) => {
@@ -398,6 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Add nice focus animation
         teamIdInput.addEventListener('focus', () => {
+            initAudioContext(); // Ensure audio context is ready
             playButtonClickSound();
         });
     }
@@ -405,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add click sounds to all buttons
     document.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', () => {
+            initAudioContext(); // Ensure audio context is ready on click
             playButtonClickSound();
         });
     });
