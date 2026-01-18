@@ -1,25 +1,133 @@
 let teamsData = [];
 
+// Audio objects for sounds
+let welcomeAudio = null;
+let buttonClickAudio = null;
+
+// Initialize audio files
+function initAudio() {
+    welcomeAudio = new Audio('Welcome.mp3');
+    welcomeAudio.volume = 0.7;
+    
+    // Button click sound using Web Audio API for a nice click sound
+    buttonClickAudio = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// Play welcome sound when site opens
+function playWelcomeSound() {
+    if (welcomeAudio) {
+        welcomeAudio.play().catch(error => {
+            console.log('Could not play welcome sound:', error);
+        });
+    }
+}
+
+// Play button click sound
+function playButtonClickSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 600;
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15);
+    } catch (error) {
+        console.log('Could not play button sound:', error);
+    }
+}
+
+// Play tone sequence (from Commander Military project)
+function playToneSequence(audioContext, frequencies, durations) {
+    let timeOffset = 0;
+    
+    frequencies.forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+
+        const startTime = audioContext.currentTime + timeOffset;
+        const duration = durations[index] || 0.2;
+
+        gainNode.gain.setValueAtTime(0.3, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+
+        timeOffset += duration;
+    });
+}
+
+// Play success sound - ascending tone sequence (from Commander Military project)
+function playSuccessSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Ascending sequence: [440, 554, 659, 880] with durations [0.15, 0.15, 0.15, 0.3]
+        playToneSequence(audioContext, [440, 554, 659, 880], [0.15, 0.15, 0.15, 0.3]);
+    } catch (error) {
+        console.log('Could not play success sound:', error);
+    }
+}
+
+// Play error sound - descending tone sequence (from Commander Military project)
+function playErrorSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Descending sequence: [880, 659, 440, 330] with durations [0.1, 0.1, 0.1, 0.2]
+        playToneSequence(audioContext, [880, 659, 440, 330], [0.1, 0.1, 0.1, 0.2]);
+    } catch (error) {
+        console.log('Could not play error sound:', error);
+    }
+}
+
+// Play typewriter sound for each character
+function playTypewriterSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Typewriter click sound - short, sharp click
+        oscillator.type = 'square';
+        oscillator.frequency.value = 1000 + Math.random() * 200; // Slight variation in pitch
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.05);
+    } catch (error) {
+        console.log('Could not play typewriter sound:', error);
+    }
+}
+
+// Shake animation for invalid input
+function shakeInput(inputElement) {
+    inputElement.classList.add('shake-animation');
+    setTimeout(() => {
+        inputElement.classList.remove('shake-animation');
+    }, 600);
+}
+
 function playSound(isSuccess) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
     if (isSuccess) {
-        oscillator.frequency.value = 800;
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
+        playSuccessSound();
     } else {
-        oscillator.frequency.value = 300;
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.4);
+        playErrorSound();
     }
 }
 
@@ -113,10 +221,15 @@ function initParticles() {
     });
 }
 
-// Initialize particles when page loads
+// Initialize particles and audio when page loads
 window.addEventListener('load', () => {
     initParticles();
+    initAudio();
     loadTeamsData();
+    // Play welcome sound after a short delay for better UX
+    setTimeout(() => {
+        playWelcomeSound();
+    }, 500);
 });
 
 // Load teams data from JSON file
@@ -135,6 +248,8 @@ async function loadTeamsData() {
 }
 
 window.enterHackathon = function() {
+    playButtonClickSound();
+    
     const welcomeScreen = document.getElementById('welcomeScreen');
     const mainScreen = document.getElementById('mainScreen');
 
@@ -143,6 +258,7 @@ window.enterHackathon = function() {
     setTimeout(() => {
         welcomeScreen.classList.add('hidden');
         mainScreen.classList.remove('hidden');
+        mainScreen.style.animation = 'fadeInScale 0.6s ease-out forwards';
     }, 500);
 }
 
@@ -158,36 +274,88 @@ document.head.appendChild(style);
 
 window.searchTeam = function(event) {
     event.preventDefault();
+    playButtonClickSound();
 
     const teamIdInput = document.getElementById('teamIdInput');
     const teamId = teamIdInput.value.trim().toUpperCase();
 
     if (!teamId) {
-        alert('Please enter a Team ID');
+        playErrorSound();
+        shakeInput(teamIdInput);
+        // Show a nicer error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        errorMsg.textContent = 'Please enter a Team ID';
+        errorMsg.style.animation = 'fadeInDown 0.3s ease-out';
+        
+        const inputGroup = document.querySelector('.input-group');
+        const existingError = inputGroup.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        inputGroup.appendChild(errorMsg);
+        
+        setTimeout(() => {
+            errorMsg.style.animation = 'fadeOutUp 0.3s ease-out';
+            setTimeout(() => errorMsg.remove(), 300);
+        }, 2000);
         return;
     }
 
-    // Show loading spinner
-    document.querySelector('.search-card').classList.add('hidden');
-    document.getElementById('loadingSpinner').classList.remove('hidden');
+    // Show loading spinner with animation
+    const searchCard = document.querySelector('.search-card');
+    searchCard.style.animation = 'fadeOut 0.3s ease-out forwards';
+    
+    setTimeout(() => {
+        searchCard.classList.add('hidden');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.style.animation = 'fadeInScale 0.4s ease-out';
+    }, 300);
 
     // Simulate loading delay for better UX
     setTimeout(() => {
         // Search for team in data
         const team = teamsData.find(t => t.team_id.toUpperCase() === teamId);
 
-        document.getElementById('loadingSpinner').classList.add('hidden');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.style.animation = 'fadeOut 0.3s ease-out forwards';
 
-        if (team) {
-            playSound(true);
-            displayResult(team);
-        } else {
-            playSound(false);
-            alert(`Team ID "${teamId}" not found. Please check your Team ID and try again.`);
-            document.querySelector('.search-card').classList.remove('hidden');
-            teamIdInput.value = '';
-            teamIdInput.focus();
-        }
+        setTimeout(() => {
+            loadingSpinner.classList.add('hidden');
+
+            if (team) {
+                playSound(true);
+                displayResult(team);
+            } else {
+                playSound(false);
+                // Shake animation for invalid team ID
+                shakeInput(teamIdInput);
+                
+                // Show error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-message';
+                errorMsg.textContent = `Team ID "${teamId}" not found. Please check and try again.`;
+                errorMsg.style.animation = 'fadeInDown 0.3s ease-out';
+                
+                const inputGroup = document.querySelector('.input-group');
+                const existingError = inputGroup.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+                inputGroup.appendChild(errorMsg);
+                
+                setTimeout(() => {
+                    errorMsg.style.animation = 'fadeOutUp 0.3s ease-out';
+                    setTimeout(() => errorMsg.remove(), 300);
+                }, 3000);
+                
+                searchCard.classList.remove('hidden');
+                searchCard.style.animation = 'fadeInScale 0.4s ease-out';
+                teamIdInput.value = '';
+                teamIdInput.focus();
+            }
+        }, 300);
     }, 1500);
 }
 
@@ -213,7 +381,14 @@ window.displayResult = function(team) {
 
     function typeWriter() {
         if (charIndex < text.length) {
-            problemText.textContent += text.charAt(charIndex);
+            const currentChar = text.charAt(charIndex);
+            problemText.textContent += currentChar;
+            
+            // Play typewriter sound for letters and numbers, skip for spaces and punctuation
+            if (currentChar.match(/[a-zA-Z0-9]/)) {
+                playTypewriterSound();
+            }
+            
             charIndex++;
             setTimeout(typeWriter, 30);
         }
@@ -223,18 +398,24 @@ window.displayResult = function(team) {
 }
 
 window.resetSearch = function() {
+    playButtonClickSound();
+    
     const resultCard = document.getElementById('resultCard');
     const searchCard = document.querySelector('.search-card');
     const teamIdInput = document.getElementById('teamIdInput');
 
-    resultCard.classList.add('hidden');
-    searchCard.classList.remove('hidden');
-
-    teamIdInput.value = '';
-    teamIdInput.focus();
+    resultCard.style.animation = 'fadeOut 0.4s ease-out forwards';
+    
+    setTimeout(() => {
+        resultCard.classList.add('hidden');
+        searchCard.classList.remove('hidden');
+        searchCard.style.animation = 'fadeInScale 0.5s ease-out';
+        teamIdInput.value = '';
+        teamIdInput.focus();
+    }, 400);
 }
 
-// Handle Enter key on input
+// Handle Enter key on input and add button click sounds
 document.addEventListener('DOMContentLoaded', () => {
     const teamIdInput = document.getElementById('teamIdInput');
     if (teamIdInput) {
@@ -244,5 +425,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('teamForm').dispatchEvent(new Event('submit'));
             }
         });
+        
+        // Add nice focus animation
+        teamIdInput.addEventListener('focus', () => {
+            playButtonClickSound();
+        });
     }
+    
+    // Add click sounds to all buttons
+    document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+            playButtonClickSound();
+        });
+    });
 });
