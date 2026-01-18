@@ -277,9 +277,76 @@ function initParticles() {
     });
 }
 
+// Initialize animated flags in background
+function initFlags() {
+    const flagsContainer = document.getElementById('flagsContainer');
+    if (!flagsContainer) return;
+
+    const flags = [
+        { code: 'in', name: 'India' },
+        { code: 'ph', name: 'Philippines' },
+        { code: 'my', name: 'Malaysia' },
+        { code: 'th', name: 'Thailand' }
+    ];
+    
+    // Reduce flags on mobile for better performance
+    const flagCount = isMobile ? 8 : 16;
+    
+    function createFlag() {
+        const flagData = flags[Math.floor(Math.random() * flags.length)];
+        const flagDiv = document.createElement('div');
+        flagDiv.className = 'flag-item';
+        
+        const img = document.createElement('img');
+        img.src = `https://flagcdn.com/${flagData.code}.svg`;
+        img.width = 40 + Math.random() * 20; // Random size 40-60px
+        img.alt = flagData.name;
+        img.title = flagData.name;
+        
+        flagDiv.appendChild(img);
+        
+        // Random starting position (left side of screen)
+        flagDiv.style.left = Math.random() * 100 + '%';
+        
+        // Random animation duration (20-35 seconds)
+        const duration = 20 + Math.random() * 15;
+        flagDiv.style.animationDuration = duration + 's';
+        
+        // Random animation delay (0-3 seconds)
+        const delay = Math.random() * 3;
+        flagDiv.style.animationDelay = delay + 's';
+        
+        // Random horizontal drift for more natural movement
+        const drift = 30 + (Math.random() - 0.5) * 60; // 0px to 60px
+        flagDiv.dataset.drift = drift;
+        
+        flagsContainer.appendChild(flagDiv);
+        
+        // Remove flag after animation completes
+        setTimeout(() => {
+            if (flagDiv.parentNode) {
+                flagDiv.remove();
+            }
+        }, (duration + delay) * 1000);
+    }
+    
+    // Create initial flags with staggered timing
+    for (let i = 0; i < flagCount; i++) {
+        setTimeout(() => createFlag(), i * 1500);
+    }
+    
+    // Continuously create new flags to maintain constant flow
+    setInterval(() => {
+        if (flagsContainer.children.length < flagCount) {
+            createFlag();
+        }
+    }, 2500);
+}
+
 // Initialize particles and audio when page loads
 window.addEventListener('load', () => {
     initParticles();
+    initFlags(); // Initialize animated flags
     initAudio();
     loadTeamsData();
     // ❌ REMOVED: Welcome sound on page load (blocked by browsers)
