@@ -92,29 +92,6 @@ function playErrorSound() {
     }
 }
 
-// Play typewriter sound for each character
-function playTypewriterSound() {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        // Typewriter click sound - short, sharp click
-        oscillator.type = 'square';
-        oscillator.frequency.value = 1000 + Math.random() * 200; // Slight variation in pitch
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.05);
-    } catch (error) {
-        console.log('Could not play typewriter sound:', error);
-    }
-}
-
 // Shake animation for invalid input
 function shakeInput(inputElement) {
     inputElement.classList.add('shake-animation');
@@ -381,14 +358,7 @@ window.displayResult = function(team) {
 
     function typeWriter() {
         if (charIndex < text.length) {
-            const currentChar = text.charAt(charIndex);
-            problemText.textContent += currentChar;
-            
-            // Play typewriter sound for letters and numbers, skip for spaces and punctuation
-            if (currentChar.match(/[a-zA-Z0-9]/)) {
-                playTypewriterSound();
-            }
-            
+            problemText.textContent += text.charAt(charIndex);
             charIndex++;
             setTimeout(typeWriter, 30);
         }
