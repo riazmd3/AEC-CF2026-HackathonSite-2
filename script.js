@@ -1,5 +1,8 @@
 let teamsData = [];
 
+// Mobile detection for performance optimization
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 // Shared AudioContext for better performance and GitHub.io compatibility
 let audioContext = null;
 let audioContextInitialized = false;
@@ -26,13 +29,13 @@ function initAudio() {
     welcomeAudio.preload = 'auto';
 }
 
-// Play welcome sound when site opens
+// Play welcome sound - ONLY on user action (required for GitHub.io)
 function playWelcomeSound() {
     if (welcomeAudio) {
-        // Initialize audio context on user interaction
         initAudioContext();
-        welcomeAudio.play().catch(error => {
-            console.log('Could not play welcome sound:', error);
+        welcomeAudio.currentTime = 0;
+        welcomeAudio.play().catch(() => {
+            // Silently fail - MP3 might be blocked on some browsers
         });
     }
 }
@@ -189,7 +192,8 @@ function initParticles() {
     canvas.height = window.innerHeight;
 
     const particles = [];
-    const particleCount = 80;
+    // Reduce particles on mobile for better performance
+    const particleCount = isMobile ? 30 : 80;
 
     // Particle class
     class Particle {
@@ -241,20 +245,22 @@ function initParticles() {
             particles[i].draw();
         }
 
-        // Draw connections
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+        // Draw connections - disabled on mobile for better performance
+        if (!isMobile) {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
 
-                if (distance < 100) {
-                    ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distance / 100})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.stroke();
+                    if (distance < 100) {
+                        ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distance / 100})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
                 }
             }
         }
@@ -276,10 +282,8 @@ window.addEventListener('load', () => {
     initParticles();
     initAudio();
     loadTeamsData();
-    // Play welcome sound after a short delay for better UX
-    setTimeout(() => {
-        playWelcomeSound();
-    }, 500);
+    // ❌ REMOVED: Welcome sound on page load (blocked by browsers)
+    // ✅ Moved to enterHackathon button click (user action required)
 });
 
 // Load teams data from JSON file
@@ -298,6 +302,9 @@ async function loadTeamsData() {
 }
 
 window.enterHackathon = function() {
+    // ✅ FIX 1: Play MP3 ONLY on user action (button click)
+    initAudioContext();
+    playWelcomeSound();
     playButtonClickSound();
     
     const welcomeScreen = document.getElementById('welcomeScreen');
@@ -434,8 +441,8 @@ window.displayResult = function(team) {
             const currentChar = text.charAt(charIndex);
             problemText.textContent += currentChar;
             
-            // Play typewriter sound only for alphanumeric characters (lightweight)
-            if (currentChar.match(/[a-zA-Z0-9]/)) {
+            // ✅ FIX 4: Play typewriter sound only on desktop (disabled on mobile)
+            if (!isMobile && currentChar.match(/[a-zA-Z0-9]/)) {
                 playTypewriterSound();
             }
             
@@ -465,26 +472,13 @@ window.resetSearch = function() {
     }, 400);
 }
 
-// Initialize audio context on any user interaction (required for GitHub.io)
-function setupAudioInteraction() {
-    const initOnInteraction = () => {
-        initAudioContext();
-        // Remove listeners after first interaction to avoid memory leaks
-        document.removeEventListener('click', initOnInteraction);
-        document.removeEventListener('keydown', initOnInteraction);
-        document.removeEventListener('touchstart', initOnInteraction);
-    };
-    
-    document.addEventListener('click', initOnInteraction, { once: true });
-    document.addEventListener('keydown', initOnInteraction, { once: true });
-    document.addEventListener('touchstart', initOnInteraction, { once: true });
-}
+// ✅ FIX 6: Simplified audio context init (only click event)
+document.addEventListener('click', () => {
+    initAudioContext();
+}, { once: true });
 
-// Handle Enter key on input and add button click sounds
+// Handle Enter key on input
 document.addEventListener('DOMContentLoaded', () => {
-    // Setup audio context initialization on user interaction
-    setupAudioInteraction();
-    
     const teamIdInput = document.getElementById('teamIdInput');
     if (teamIdInput) {
         teamIdInput.addEventListener('keypress', (e) => {
@@ -494,18 +488,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Add nice focus animation
-        teamIdInput.addEventListener('focus', () => {
-            initAudioContext(); // Ensure audio context is ready
-            playButtonClickSound();
-        });
+        // Remove focus sound to avoid double audio triggers
+        // ✅ FIX 5: Only button clicks should play sounds
     }
     
-    // Add click sounds to all buttons
-    document.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', () => {
-            initAudioContext(); // Ensure audio context is ready on click
-            playButtonClickSound();
-        });
-    });
+    // ✅ FIX 5: REMOVED duplicate button click listeners
+    // Sounds are already handled in individual button click handlers
 });
