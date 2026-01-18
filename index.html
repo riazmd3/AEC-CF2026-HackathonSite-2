@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODE FEST 26 - Arunai Engineering College</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="particles"></canvas>
+
+    <div class="container">
+        <div id="welcomeScreen" class="welcome-screen">
+            <div class="logo-container">
+                <div class="glow-ring"></div>
+                <h1 class="college-name">Arunai Engineering College</h1>
+                <h2 class="event-name">CODE FEST 26</h2>
+                <p class="event-subtitle">An International Talent Hunt - Hackathon (24-Hours)</p>
+                <div class="date-info">05th - 06th FEB 2026</div>
+            </div>
+            <button class="enter-btn" onclick="enterHackathon()">
+                <span>Enter Hackathon</span>
+                <div class="btn-glow"></div>
+            </button>
+        </div>
+
+        <div id="mainScreen" class="main-screen hidden">
+            <div class="header">
+                <h1 class="main-title">CODE FEST 26</h1>
+                <p class="subtitle">Team Challenge Portal</p>
+            </div>
+
+            <div class="search-card">
+                <h2 class="search-title">Enter Your Team ID</h2>
+                <form id="teamForm" onsubmit="searchTeam(event)">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            id="teamIdInput"
+                            placeholder="e.g., CF26001"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button type="submit" class="search-btn">
+                        <span>Reveal Challenge</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div id="loadingSpinner" class="loading-spinner hidden">
+                <div class="spinner"></div>
+                <p>Accessing Database...</p>
+            </div>
+
+            <div id="resultCard" class="result-card hidden">
+                <div class="result-header">
+                    <div class="team-badge" id="teamBadge"></div>
+                </div>
+                <div class="domain-container">
+                    <span class="domain-label">Domain</span>
+                    <h2 class="domain-title" id="domainTitle"></h2>
+                </div>
+                <div class="problem-container">
+                    <span class="problem-label">Problem Statement</span>
+                    <p class="problem-text" id="problemText"></p>
+                </div>
+                <button class="back-btn" onclick="resetSearch()">
+                    <span>Search Another Team</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
