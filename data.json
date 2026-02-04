@@ -1,27 +1,20 @@
 [
   {
     "team_id": "CF26001",
+    "ps_id": "PS1CF1",
     "domain": "Cybersecurity",
-    "problem_statement": "Healthcare providers lack real-time threat detection for ransomware targeting IoT medical devices, leading to potential patient data breaches and service disruption."
+    "problem_statement": "Generative AI systems are increasingly integrated into enterprise workflows..."
+  },
+  {
+    "team_id": "CF26001",
+    "ps_id": "PS2CF1",
+    "domain": "Cybersecurity",
+    "problem_statement": "Second problem for same team (if needed)..."
   },
   {
     "team_id": "CF26002",
+    "ps_id": "PS1CF2",
     "domain": "Artificial Intelligence",
-    "problem_statement": "Educational institutions struggle to provide personalized learning experiences at scale, resulting in students falling behind without targeted intervention."
-  },
-  {
-    "team_id": "CF26003",
-    "domain": "Blockchain",
-    "problem_statement": "Supply chain management lacks transparency and traceability, leading to counterfeiting issues and inefficient logistics tracking."
-  },
-  {
-    "team_id": "CF26004",
-    "domain": "Quantum Computing",
-    "problem_statement": "Financial institutions need quantum-resistant cryptography solutions to protect sensitive data from future quantum computing threats."
-  },
-  {
-    "team_id": "CF26005",
-    "domain": "Sustainability",
-    "problem_statement": "Urban areas face challenges in monitoring and reducing carbon emissions in real-time, hindering climate action initiatives."
+    "problem_statement": "Educational institutions struggle to provide personalized learning experiences..."
   }
 ]

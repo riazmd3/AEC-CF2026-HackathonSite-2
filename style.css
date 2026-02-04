@@ -580,6 +580,27 @@ body {
 .input-group {
     margin-bottom: 40px; /* Increased to accommodate error message */
 }
+.ps-actions {
+    margin-top: 10px;
+}
+
+.copy-btn, .download-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.copy-btn {
+    background: #00f0ff;
+    color: black;
+}
+
+.download-btn {
+    background: #ca4795;
+    color: white;
+}
 
 /* Enhanced button hover effects */
 .enter-btn:hover,

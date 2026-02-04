@@ -68,6 +68,8 @@
                 <div class="result-header">
                     <div class="team-badge" id="teamBadge"></div>
                 </div>
+                <div class="ps-badge" id="psBadge"></div>
+
                 <div class="domain-container">
                     <span class="domain-label">Domain</span>
                     <h2 class="domain-title" id="domainTitle"></h2>
@@ -75,7 +77,13 @@
                 <div class="problem-container">
                     <span class="problem-label">Problem Statement</span>
                     <p class="problem-text" id="problemText"></p>
+                
+                    <div class="ps-actions">
+                        <button class="copy-btn" onclick="copyProblem()">Copy</button>
+                        <button class="download-btn" onclick="downloadProblem()">Download TXT</button>
+                    </div>
                 </div>
+                
                 <button class="back-btn" onclick="resetSearch()">
                     <span>Close Mission</span>
                 </button>

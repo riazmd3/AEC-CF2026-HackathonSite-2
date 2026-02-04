@@ -134,38 +134,40 @@ function playErrorSound() {
 // Lightweight typewriter sound - throttled to avoid lag
 let typewriterSoundCounter = 0;
 function playTypewriterSound() {
-    if (!audioContextInitialized) {
-        initAudioContext();
-    }
-    
-    if (!audioContext || audioContext.state === 'suspended') {
-        return;
-    }
-    
-    // Throttle: only play every 3rd character to reduce lag
-    typewriterSoundCounter++;
-    if (typewriterSoundCounter % 3 !== 0) {
-        return;
-    }
-    
-    try {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+    return ;
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+    // if (!audioContextInitialized) {
+    //     initAudioContext();
+    // }
+    
+    // if (!audioContext || audioContext.state === 'suspended') {
+    //     return;
+    // }
+    
+    // // Throttle: only play every 3rd character to reduce lag
+    // typewriterSoundCounter++;
+    // if (typewriterSoundCounter % 3 !== 0) {
+    //     return;
+    // }
+    
+    // try {
+    //     const oscillator = audioContext.createOscillator();
+    //     const gainNode = audioContext.createGain();
 
-        // Lightweight click sound
-        oscillator.type = 'square';
-        oscillator.frequency.value = 800 + Math.random() * 100;
-        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.03);
+    //     oscillator.connect(gainNode);
+    //     gainNode.connect(audioContext.destination);
+
+    //     // Lightweight click sound
+    //     oscillator.type = 'square';
+    //     oscillator.frequency.value = 800 + Math.random() * 100;
+    //     gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+    //     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.03);
         
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.03);
-    } catch (error) {
-        // Silently fail to avoid console spam
-    }
+    //     oscillator.start(audioContext.currentTime);
+    //     oscillator.stop(audioContext.currentTime + 0.03);
+    // } catch (error) {
+    //     // Silently fail to avoid console spam
+    // }
 }
 
 // Shake animation for invalid input
@@ -440,7 +442,8 @@ window.searchTeam = function(event) {
     // Simulate loading delay for better UX
     setTimeout(() => {
         // Search for team in data
-        const team = teamsData.find(t => t.team_id.toUpperCase() === teamId);
+        const team = teamsData.filter(t => t.team_id.toUpperCase() === teamId);
+
 
         const loadingSpinner = document.getElementById('loadingSpinner');
         loadingSpinner.style.animation = 'fadeOut 0.3s ease-out forwards';
@@ -448,10 +451,11 @@ window.searchTeam = function(event) {
         setTimeout(() => {
             loadingSpinner.classList.add('hidden');
 
-            if (team) {
+            if (team.length > 0) {
                 playSound(true);
-                displayResult(team);
-            } else {
+                displayResult(team[0]);
+            }
+             else {
                 playSound(false);
                 // Shake animation for invalid team ID
                 shakeInput(teamIdInput);
@@ -491,6 +495,12 @@ window.displayResult = function(team) {
 
     // Set team badge
     teamBadge.textContent = team.team_id;
+    const psBadge = document.getElementById('psBadge');
+if (team.ps_id) {
+    psBadge.textContent = team.ps_id;
+} else {
+    psBadge.textContent = "";
+}
 
     // Set domain
     domainTitle.textContent = team.domain;
@@ -555,10 +565,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Remove focus sound to avoid double audio triggers
-        // ✅ FIX 5: Only button clicks should play sounds
-    }
+       }
     
-    // ✅ FIX 5: REMOVED duplicate button click listeners
-    // Sounds are already handled in individual button click handlers
+
 });
+window.copyProblem = function() {
+    const text = document.getElementById('problemText').innerText;
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Problem statement copied!");
+    });
+};
+
+window.downloadProblem = function() {
+    const text = document.getElementById('problemText').innerText;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "problem_statement.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
