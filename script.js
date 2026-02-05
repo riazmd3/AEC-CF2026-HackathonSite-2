@@ -442,7 +442,7 @@ window.searchTeam = function(event) {
     // Simulate loading delay for better UX
     setTimeout(() => {
         // Search for team in data
-        const team = teamsData.filter(t => t.team_id.toUpperCase() === teamId);
+        const team = teamsData.filter(t => t.team_id && t.team_id.toUpperCase() === teamId);
 
 
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -492,43 +492,69 @@ window.displayResult = function(team) {
     const teamBadge = document.getElementById('teamBadge');
     const domainTitle = document.getElementById('domainTitle');
     const problemText = document.getElementById('problemText');
+    const expectedText = document.getElementById('expectedText');
 
     // Set team badge
     teamBadge.textContent = team.team_id;
     const psBadge = document.getElementById('psBadge');
-if (team.ps_id) {
-    psBadge.textContent = team.ps_id;
-} else {
-    psBadge.textContent = "";
-}
+    if (team.ps_id) {
+        psBadge.textContent = team.ps_id;
+    } else {
+        psBadge.textContent = "";
+    }
 
     // Set domain
     domainTitle.textContent = team.domain;
 
-    // Set problem statement with typewriter effect
+    // Reset both blocks
     problemText.textContent = '';
+    expectedText.textContent = '';
     resultCard.classList.remove('hidden');
 
-    // Typewriter effect for problem statement with lightweight sound
-    let charIndex = 0;
-    const text = team.problem_statement;
+    let problem = team.problem_statement || '';
+    let expected = team.expected_solutions || '';
 
-    function typeWriter() {
-        if (charIndex < text.length) {
-            const currentChar = text.charAt(charIndex);
-            problemText.textContent += currentChar;
-            
-            // ✅ FIX 4: Play typewriter sound only on desktop (disabled on mobile)
-            if (!isMobile && currentChar.match(/[a-zA-Z0-9]/)) {
+    if (team.problem_title) {
+        problem = team.problem_title + '\n\n' + problem;
+    }
+
+    let pIndex = 0;
+    let eIndex = 0;
+
+    // Typewriter for Problem Statement
+    function typeProblem() {
+        if (pIndex < problem.length) {
+            const ch = problem.charAt(pIndex);
+            problemText.textContent += ch;
+
+            if (!isMobile && ch.match(/[a-zA-Z0-9]/)) {
                 playTypewriterSound();
             }
-            
-            charIndex++;
-            setTimeout(typeWriter, 30);
+
+            pIndex++;
+            setTimeout(typeProblem, 0.2);
+        } else {
+            // After finishing problem, start expected solution
+            setTimeout(typeExpected, 0.2);
         }
     }
 
-    setTimeout(typeWriter, 800);
+    // Typewriter for Expected Solution
+    function typeExpected() {
+        if (eIndex < expected.length) {
+            const ch = expected.charAt(eIndex);
+            expectedText.textContent += ch;
+
+            if (!isMobile && ch.match(/[a-zA-Z0-9]/)) {
+                playTypewriterSound();
+            }
+
+            eIndex++;
+            setTimeout(typeExpected, 10);
+        }
+    }
+
+    setTimeout(typeProblem, 800);
 }
 
 window.resetSearch = function() {
@@ -570,7 +596,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 window.copyProblem = function() {
-    const text = document.getElementById('problemText').innerText;
+    const problemText = document.getElementById('problemText').innerText;
+    const expectedText = document.getElementById('expectedText').innerText;
+    const text = expectedText
+        ? problemText + '\n\nExpected Solution:\n\n' + expectedText
+        : problemText;
 
     navigator.clipboard.writeText(text).then(() => {
         alert("Problem statement copied!");
@@ -578,7 +608,11 @@ window.copyProblem = function() {
 };
 
 window.downloadProblem = function() {
-    const text = document.getElementById('problemText').innerText;
+    const problemText = document.getElementById('problemText').innerText;
+    const expectedText = document.getElementById('expectedText').innerText;
+    const text = expectedText
+        ? problemText + '\n\nExpected Solution:\n\n' + expectedText
+        : problemText;
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
 

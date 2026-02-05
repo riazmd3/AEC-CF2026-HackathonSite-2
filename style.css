@@ -428,6 +428,17 @@ body {
     background: rgba(15, 23, 42, 0.8);
     border-radius: 8px;
     border-left: 4px solid var(--secondary-blue);
+    font-family: inherit;
+    white-space: pre-wrap;
+    margin: 0 0 24px 0;
+}
+
+#expectedText {
+    margin-bottom: 0;
+}
+
+#problemCard .problem-label:nth-of-type(2) {
+    margin-top: 8px;
 }
 
 .back-btn {

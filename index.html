@@ -74,10 +74,13 @@
                     <span class="domain-label">Domain</span>
                     <h2 class="domain-title" id="domainTitle"></h2>
                 </div>
-                <div class="problem-container">
-                    <span class="problem-label">Problem Statement</span>
-                    <p class="problem-text" id="problemText"></p>
-                
+                <div id="problemCard" class="problem-container">
+                    <h3 class="problem-label">Problem Statement</h3>
+                    <pre id="problemText" class="problem-text"></pre>
+
+                    <h3 class="problem-label">Expected Solution</h3>
+                    <pre id="expectedText" class="problem-text"></pre>
+
                     <div class="ps-actions">
                         <button class="copy-btn" onclick="copyProblem()">Copy</button>
                         <button class="download-btn" onclick="downloadProblem()">Download TXT</button>
