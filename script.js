@@ -524,7 +524,7 @@ window.displayResult = function(team) {
     // Typewriter for Problem Statement
     function typeProblem() {
         if (pIndex < problem.length) {
-            const ch = problem.charAt(pIndex);
+            const ch = problem.charAt(pIndex); 
             problemText.textContent += ch;
 
             if (!isMobile && ch.match(/[a-zA-Z0-9]/)) {
